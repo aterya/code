@@ -1,0 +1,119 @@
+<?php
+session_start();
+if ($_POST["vercode"] != $_SESSION["vercode"] OR $_SESSION["vercode"]=='')  {
+     echo  '<strong>Incorrect verification code.</strong>';
+} else {
+     // add form data processing code here
+     echo  '<strong>Verification successful.</strong>';
+};
+
+include 'config.php';
+
+if(isset($_POST['submit'])){
+
+   $name = mysqli_real_escape_string($conn, $_POST['name']);
+   $email = mysqli_real_escape_string($conn, $_POST['email']);
+   $pass = mysqli_real_escape_string($conn, md5($_POST['password']));
+   $cpass = mysqli_real_escape_string($conn, md5($_POST['cpassword']));
+   $image = $_FILES['image']['name'];
+   $image_size = $_FILES['image']['size'];
+   $image_tmp_name = $_FILES['image']['tmp_name'];
+   $image_folder = 'uploaded_img/'.$image;
+
+   $select = mysqli_query($conn, "SELECT * FROM `user_form` WHERE email = '$email' AND password = '$pass'") or die('query failed');
+
+   
+   
+
+   if(mysqli_num_rows($select) > 0){
+      $message[] = 'user already exist';
+
+
+   }else{
+      if($pass != $cpass){
+         $message[] = 'confirm password not matched!';
+      }elseif($image_size > 2000000){
+         $message[] = 'image size is too large!';
+      }else{
+         $insert = mysqli_query($conn, "INSERT INTO `user_form`(name, email, password, image) VALUES('$name', '$email', '$pass', '$image')") or die('query failed');
+
+         if($insert){
+            move_uploaded_file($image_tmp_name, $image_folder);
+            $message[] = 'registered successfully!';
+            header('location:login.php');
+         }else{
+            $message[] = 'registeration failed!';
+
+
+         }
+
+      }
+   }
+
+}
+
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>register</title>
+
+   <!-- custom css file link  -->
+   <link rel="stylesheet" href="css/style.css">
+   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css">
+</head>
+<body>
+   
+<div class="form-container">
+
+   <form action="" method="post" enctype="multipart/form-data">
+      <h3>register now</h3>
+      <?php
+      if(isset($message)){
+         foreach($message as $message){
+            echo '<div class="message">'.$message.'</div>';
+         }
+      }
+      ?>
+      <input type="text" name="name" placeholder="enter username" class="box" required>
+      <input type="email" name="email" placeholder="enter email" class="box" required>
+      <input type="password" minlength="8" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Must contain at least one number and one uppercase and lowercase letter, and at least 8 or more characters" name="password" placeholder="enter password" class="box" id="myInput" required>
+      
+
+      <input type="password" minlength="8" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Must contain at least one number and one uppercase and lowercase letter, and at least 8 or more characters" name="cpassword" placeholder="confirm password" class="box" id="myinput"  required>
+
+     Verification code : <input type="text" name="vercode" size="10" required="required" />&nbsp;<img src="captcha.php">
+
+
+   <button type="submit" name="submit" value="register now" onclick="validcap()" class="btn btn-lg btn-success btn-block">Submit</button>
+      <p>already have an account? <a href="login.php">login now</a></p>
+  
+
+
+
+<script>
+
+function myFunction() {
+  var x = document.getElementById("myInput");
+  var y = document.getElementById("myinput");
+  if (x.type === "password") {
+    x.type = "text";
+  } else {
+    x.type = "password";
+  }
+  if (y.type ==="confirm password") {
+   y.type = "text";
+  } else {
+   y.type = "confirm password";
+  }
+}
+
+</script>
+
+
+</body>
+</html>
